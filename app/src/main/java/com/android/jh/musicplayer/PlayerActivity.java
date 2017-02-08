@@ -20,7 +20,6 @@ public class PlayerActivity extends AppCompatActivity {
     ImageButton btnRew, btnPlay, btnFf;
     List<Music> datas;
     PlayerAdapter adapter;
-
     MediaPlayer player;
     SeekBar seekBar;
     TextView txtDuration,txtCurrent;
@@ -52,44 +51,30 @@ public class PlayerActivity extends AppCompatActivity {
             }
         }
     };*/
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
-
         playStatus = STOP;
-
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
-
-
-        btnRew = (ImageButton) findViewById(R.id.btnRew);
-        btnPlay = (ImageButton) findViewById(R.id.btnPlay);
-        btnFf = (ImageButton) findViewById(R.id.btnFf);
-
-        btnRew.setOnClickListener(clickListener);
-        btnPlay.setOnClickListener(clickListener);
-        btnPlay.setOnClickListener(clickListener);
-
-        seekBar= (SeekBar)findViewById(R.id.seekBar);
-        seekBar.setOnSeekBarChangeListener(seekBarChangeListener);
-        txtDuration = (TextView)findViewById(R.id.txtDuration);
-        txtCurrent = (TextView)findViewById(R.id.txtCurrent);
-
-
-
+        //레이아웃 초기화
+        layoutInit();
         // 0. 데이터 가져오기
         datas = DataLoader.get(this);
-
         // 1. 뷰페이저 가져오기
         viewPager = (ViewPager) findViewById(R.id.viewPager);
         // 2. 뷰페이저용 아답터 생성
         adapter = new PlayerAdapter(datas ,this);
         // 3. 뷰페이저 아답터 연결
         viewPager.setAdapter( adapter );
-
         // 4. 뷰 페이저 리스너 연결
         viewPager.addOnPageChangeListener(viewPagerListener);
+        //특정 페이지 호출
+        returnPage();
+    }
 
+    private void returnPage() {
         // 특정 페이지 호출
         Intent intent = getIntent();
         if(intent != null){
@@ -106,7 +91,28 @@ public class PlayerActivity extends AppCompatActivity {
                 viewPager.setCurrentItem(position);
             }
         }
+    }
 
+    private void layoutInit() {
+        btnRew = (ImageButton) findViewById(R.id.btnRew);
+        btnPlay = (ImageButton) findViewById(R.id.btnPlay);
+        btnFf = (ImageButton) findViewById(R.id.btnFf);
+
+        btnRew.setOnClickListener(clickListener);
+        btnPlay.setOnClickListener(clickListener);
+        btnFf.setOnClickListener(clickListener);
+
+        seekBar= (SeekBar)findViewById(R.id.seekBar);
+        seekBar.setOnSeekBarChangeListener(seekBarChangeListener);
+        txtDuration = (TextView)findViewById(R.id.txtDuration);
+        txtCurrent = (TextView)findViewById(R.id.txtCurrent);
+    }
+
+    private void plyaerInit() {
+        Uri musicUri = datas.get(position).uri;
+        //시스템자원, 음원파일Uri
+        player = MediaPlayer.create(this, musicUri);
+        player.setLooping(false);// 반복여부
     }
 
     View.OnClickListener clickListener = new View.OnClickListener(){
@@ -125,6 +131,7 @@ public class PlayerActivity extends AppCompatActivity {
             }
         }
     };
+
     //컨트롤러 정보 초기화
     private void init() {
         // 뷰페이저로 이동할 경우 플레이어 세팅된 값을 해제한 후 로직을 실행한다
@@ -135,11 +142,18 @@ public class PlayerActivity extends AppCompatActivity {
             btnPlay.setImageResource(android.R.drawable.ic_media_play);
             player.release();
         }
-        Uri musicUri = datas.get(position).uri;
-        //시스템자원, 음원파일Uri
-        player = MediaPlayer.create(this, musicUri);
+        // 플레이어 세팅
+        plyaerInit();
+        // 컨트롤러 세팅
+        controllerInit();
 
-        player.setLooping(false);// 반복여부
+        //미디어 플레이어에 완료 체크 리스너를 등록한다
+        player.setOnCompletionListener(MediaPlayerListener);
+
+        play();
+    }
+
+    private void controllerInit() {
         //SeekBar 길이
         seekBar.setMax(player.getDuration());
         // SeekBar 현재값을 0으로
@@ -147,66 +161,77 @@ public class PlayerActivity extends AppCompatActivity {
         txtDuration.setText(convertMiliToTime(player.getDuration()) + "");
         //현재 실행시간을 0으로 설정
         txtCurrent.setText("0");
-
-        //미디어 플레이어에 완료 체크 리스너를 등록한다
-        player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                next();
-            }
-        });
-
-        play();
-
     }
+    MediaPlayer.OnCompletionListener MediaPlayerListener = new MediaPlayer.OnCompletionListener() {
+        @Override
+        public void onCompletion(MediaPlayer mediaPlayer) {
+            next();
+        }
+    };
+
     private void play() {
-
         switch (playStatus){
-            case STOP :// 플레이중이 아니면 음악 실행
-
-                player.start();
-
-                // subThread를 생성해서 미디어player의 현재 포지션 값을 seekbar를 변경해준다 매 1초마다
-
-                playStatus = PLAY;
-                //클릭시 버튼이미지 변경
-                btnPlay.setImageResource(android.R.drawable.ic_media_pause);
-                // sub thread 를 생성해서 mediaplayer 의 현재 포지션 값으로 seekbar 를 변경해준다. 매 1초마다
-                // sub thread 에서 동작할 로직 정의
-                Thread thread = new Thread() {
-                    @Override
-                    public void run() {
-                        while (playStatus < STOP) {
-                            if(player != null) {
-                                // 이 부분은 메인쓰레드에서 동작하도록 Runnable 객체를 메인쓰레드에 던져준다
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            seekBar.setProgress(player.getCurrentPosition());
-                                            txtCurrent.setText(convertMiliToTime(player.getCurrentPosition()) + "");
-                                        } catch (Exception e){ }
-                                    }
-                                });
-                            }
-                            try { Thread.sleep(1000); } catch (InterruptedException e) {}
-                        }
-                    }
-                };
-                // 새로운 쓰레드로 스타트
-                thread.start();
+            case STOP :
+                playStop();
                 break;
-            case PLAY : // 플레이중이면 멈춤
-                player.pause();
-                playStatus = PAUSE;
-                btnPlay.setImageResource(android.R.drawable.ic_media_play);
+            case PLAY :
+                playPlay();
                 break;
-            case PAUSE : // pause 상태이면 그자리부터 다시시작
-                player.start();
-                playStatus = PLAY;
-                btnPlay.setImageResource(android.R.drawable.ic_media_pause);
+            case PAUSE :
+                playPause();
                 break;
         }
+    }
+
+    private void playStop() {
+        // 플레이중이 아니면 음악 실행
+        player.start();
+        // subThread를 생성해서 미디어player의 현재 포지션 값을 seekbar를 변경해준다 매 1초마다
+        playStatus = PLAY;
+        //클릭시 버튼이미지 변경
+        btnPlay.setImageResource(android.R.drawable.ic_media_pause);
+
+        Thread thread = new TimerThread();
+        // 새로운 쓰레드로 스타트
+        thread.start();
+    }
+
+    class TimerThread extends Thread {
+        // sub thread 를 생성해서 mediaplayer 의 현재 포지션 값으로 seekbar 를 변경해준다. 매 1초마다
+        // sub thread 에서 동작할 로직 정의
+
+        @Override
+        public void run() {
+        while (playStatus < STOP) {
+            if(player != null) {
+            // 이 부분은 메인쓰레드에서 동작하도록 Runnable 객체를 메인쓰레드에 던져준다
+               runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                seekBar.setProgress(player.getCurrentPosition());
+                                txtCurrent.setText(convertMiliToTime(player.getCurrentPosition()) + "");
+                            } catch (Exception e){ }
+                        }
+                    });
+                }
+                try { Thread.sleep(1000); } catch (InterruptedException e) {}
+            }
+        }
+    }
+
+    private void playPlay() {
+        // 플레이중이면 멈춤
+        player.pause();
+        playStatus = PAUSE;
+        btnPlay.setImageResource(android.R.drawable.ic_media_play);
+    }
+
+    private void playPause() {
+        // pause 상태이면 그자리부터 다시시작
+        player.start();
+        playStatus = PLAY;
+        btnPlay.setImageResource(android.R.drawable.ic_media_pause);
     }
 
     private void prev() {
@@ -250,7 +275,7 @@ public class PlayerActivity extends AppCompatActivity {
 
         }
     };
-    //
+
     SeekBar.OnSeekBarChangeListener seekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -259,13 +284,8 @@ public class PlayerActivity extends AppCompatActivity {
                 player.seekTo(progress);
         }
         @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
-
-        }
+        public void onStartTrackingTouch(SeekBar seekBar) { }
         @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-
-        }
+        public void onStopTrackingTouch(SeekBar seekBar) { }
     };
-
 }
