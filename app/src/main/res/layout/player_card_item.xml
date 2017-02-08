@@ -39,6 +39,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="@dimen/artist_text_size"
+                android:textSize="@dimen/artist_text_size"
                 android:id="@+id/txtArtist"
                 android:gravity="center" />
         </LinearLayout>
