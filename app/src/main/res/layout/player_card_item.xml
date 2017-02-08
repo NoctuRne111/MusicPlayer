@@ -31,12 +31,14 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/txtTitle"
                 android:gravity="center"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+                android:textAppearance="@dimen/title_text_size"
+                android:textSize="@dimen/title_text_size" />
 
             <TextView
                 android:text="Artist"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textAppearance="@dimen/artist_text_size"
                 android:id="@+id/txtArtist"
                 android:gravity="center" />
         </LinearLayout>

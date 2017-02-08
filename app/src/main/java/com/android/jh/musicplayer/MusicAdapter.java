@@ -9,20 +9,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.bumptech.glide.Glide;
-
-import java.util.ArrayList;
+import java.util.List;
 
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.Holder> {
-    ArrayList<Music> datas;
+    List<Music> datas;
     Context context;
     Intent intent = null;
 
-    public MusicAdapter(ArrayList<Music> datas, Context context) {
-        this.datas = datas;
+    public MusicAdapter(Context context) {
+        this.datas = DataLoader.get(context);
         this.context = context;
-        intent = new Intent(context,PlayerActivity.class);
+        this.intent = new Intent(context,PlayerActivity.class);
     }
 
     @Override
@@ -31,8 +29,6 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.Holder> {
         Holder holder = new Holder(view);
         return holder;
     }
-
-
 
     @Override
     public void onBindViewHolder(Holder holder, int position) {
@@ -60,24 +56,23 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.Holder> {
         CardView cardView;
         TextView txtTitle, txtArtist;
         ImageView image;
-
         int position;
 
         public Holder(View itemView) {
             super(itemView);
-
             cardView = (CardView) itemView.findViewById(R.id.cardView);
             txtTitle = (TextView) itemView.findViewById(R.id.txtTitle);
             txtArtist = (TextView) itemView.findViewById(R.id.txtArtist);
             image = (ImageView) itemView.findViewById(R.id.image);
-            //
-            cardView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    intent.putExtra("position",position);
-                    context.startActivity(intent);
-                }
-            });
+            cardView.setOnClickListener(listener);
         }
+
+        private View.OnClickListener listener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                intent.putExtra("position",position);
+                context.startActivity(intent);
+            }
+        };
     }
 }

@@ -10,16 +10,16 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
-import java.util.ArrayList;
+import java.util.List;
 
 
 public class PlayerAdapter extends PagerAdapter{
 
-    ArrayList<Music> datas;
+    List<Music> datas;
     Context context;
     LayoutInflater inflater;
 
-    public PlayerAdapter(ArrayList<Music> datas, Context context){
+    public PlayerAdapter(List<Music> datas, Context context){
         this.datas = datas;
         this.context = context;
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
