@@ -297,7 +297,6 @@ public class PlayerActivity extends AppCompatActivity {
     ViewPager.PageTransformer pageTransformer = new ViewPager.PageTransformer() {
         @Override
         public void transformPage(View page, float position) {
-
             //현재 Page의 위치가 조금이라도 바뀔때마다 호출되는 메소드
             //첫번째 파라미터 : 현재 존재하는 View 객체들 중에서 위치가 변경되고 있는 View들
             //두번째 파라미터 : 각 View 들의 상대적 위치( 0.0 ~ 1.0 : 화면 하나의 백분율)
